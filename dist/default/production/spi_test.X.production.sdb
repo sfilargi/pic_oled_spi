@@ -1,0 +1,141 @@
+[p GLOBOPT AUTOSTATIC IEEE_DBL IEEE_FLT PIC14 PIC14E ]
+[d version 1.1 ]
+[d edition pro ]
+[d chip 16F18313 ]
+[d frameptr 6 ]
+"10 C:\Program Files (x86)\Microchip\xc8\v2.10\pic\sources\c99\common\sprcadd.c
+[v ___fladd __fladd `(d  1 e 4 0 ]
+"4 C:\Program Files (x86)\Microchip\xc8\v2.10\pic\sources\c99\common\Umul8_16.c
+[v __Umul8_16 _Umul8_16 `(ui  1 e 2 0 ]
+"6 C:\Program Files (x86)\Microchip\xc8\v2.10\pic\sources\c99\pic\__eeprom.c
+[v ___eecpymem __eecpymem `(v  1 e 1 0 ]
+"39
+[v ___memcpyee __memcpyee `(v  1 e 1 0 ]
+"46 C:\Users\stavros\MPLABXProjects\spi_test.X\main.c
+[v _spi_write spi_write `(v  1 e 1 0 ]
+"64
+[v _spi_command spi_command `(v  1 e 1 0 ]
+"81
+[v _main main `(v  1 e 1 0 ]
+"3388 C:\Program Files (x86)\Microchip\xc8\v2.10\pic\include\pic16f18313.h
+[v _SSP1BUF SSP1BUF `VEuc  1 e 1 @529 ]
+[s S23 . 1 `uc 1 BF 1 0 :1:0 
+`uc 1 UA 1 0 :1:1 
+`uc 1 R_nW 1 0 :1:2 
+`uc 1 S 1 0 :1:3 
+`uc 1 P 1 0 :1:4 
+`uc 1 D_nA 1 0 :1:5 
+`uc 1 CKE 1 0 :1:6 
+`uc 1 SMP 1 0 :1:7 
+]
+"4172
+[u S32 . 1 `S23 1 . 1 0 ]
+[v _SSP1STATbits SSP1STATbits `VES32  1 e 1 @532 ]
+[s S118 . 1 `uc 1 SSPM 1 0 :4:0 
+`uc 1 CKP 1 0 :1:4 
+`uc 1 SSPEN 1 0 :1:5 
+`uc 1 SSPOV 1 0 :1:6 
+`uc 1 WCOL 1 0 :1:7 
+]
+"4305
+[s S124 . 1 `uc 1 SSPM0 1 0 :1:0 
+`uc 1 SSPM1 1 0 :1:1 
+`uc 1 SSPM2 1 0 :1:2 
+`uc 1 SSPM3 1 0 :1:3 
+]
+[u S129 . 1 `S118 1 . 1 0 `S124 1 . 1 0 ]
+[v _SSP1CON1bits SSP1CON1bits `VES129  1 e 1 @533 ]
+[s S144 . 1 `uc 1 DHEN 1 0 :1:0 
+`uc 1 AHEN 1 0 :1:1 
+`uc 1 SBCDE 1 0 :1:2 
+`uc 1 SDAHT 1 0 :1:3 
+`uc 1 BOEN 1 0 :1:4 
+`uc 1 SCIE 1 0 :1:5 
+`uc 1 PCIE 1 0 :1:6 
+`uc 1 ACKTIM 1 0 :1:7 
+]
+"4686
+[u S153 . 1 `S144 1 . 1 0 ]
+[v _SSP1CON3bits SSP1CON3bits `VES153  1 e 1 @535 ]
+[s S46 . 1 `uc 1 . 1 0 :3:0 
+`uc 1 NOSCR 1 0 :1:3 
+`uc 1 ORDY 1 0 :1:4 
+`uc 1 SOSCBE 1 0 :1:5 
+`uc 1 SOSCPWR 1 0 :1:6 
+`uc 1 CSWHOLD 1 0 :1:7 
+]
+"9229
+[u S53 . 1 `S46 1 . 1 0 ]
+[v _OSCCON3bits OSCCON3bits `VES53  1 e 1 @2331 ]
+"9461
+[v _PPSLOCK PPSLOCK `VEuc  1 e 1 @3599 ]
+[s S78 . 1 `uc 1 RA0PPS 1 0 :5:0 
+]
+"10486
+[s S80 . 1 `uc 1 RA0PPS0 1 0 :1:0 
+`uc 1 RA0PPS1 1 0 :1:1 
+`uc 1 RA0PPS2 1 0 :1:2 
+`uc 1 RA0PPS3 1 0 :1:3 
+`uc 1 RA0PPS4 1 0 :1:4 
+]
+[u S86 . 1 `S78 1 . 1 0 `S80 1 . 1 0 ]
+[v _RA0PPSbits RA0PPSbits `VES86  1 e 1 @3728 ]
+[s S98 . 1 `uc 1 RA1PPS 1 0 :5:0 
+]
+"10538
+[s S100 . 1 `uc 1 RA1PPS0 1 0 :1:0 
+`uc 1 RA1PPS1 1 0 :1:1 
+`uc 1 RA1PPS2 1 0 :1:2 
+`uc 1 RA1PPS3 1 0 :1:3 
+`uc 1 RA1PPS4 1 0 :1:4 
+]
+[u S106 . 1 `S98 1 . 1 0 `S100 1 . 1 0 ]
+[v _RA1PPSbits RA1PPSbits `VES106  1 e 1 @3729 ]
+"13902
+[v _GIE GIE `VEb  1 e 0 @95 ]
+"14058
+[v _LATA0 LATA0 `VEb  1 e 0 @2144 ]
+"14064
+[v _LATA2 LATA2 `VEb  1 e 0 @2146 ]
+"14067
+[v _LATA4 LATA4 `VEb  1 e 0 @2148 ]
+"14070
+[v _LATA5 LATA5 `VEb  1 e 0 @2149 ]
+"15546
+[v _TRISA0 TRISA0 `VEb  1 e 0 @1120 ]
+"15549
+[v _TRISA1 TRISA1 `VEb  1 e 0 @1121 ]
+"15552
+[v _TRISA2 TRISA2 `VEb  1 e 0 @1122 ]
+"15555
+[v _TRISA4 TRISA4 `VEb  1 e 0 @1124 ]
+"15558
+[v _TRISA5 TRISA5 `VEb  1 e 0 @1125 ]
+"81 C:\Users\stavros\MPLABXProjects\spi_test.X\main.c
+[v _main main `(v  1 e 1 0 ]
+{
+"137
+} 0
+"64
+[v _spi_command spi_command `(v  1 e 1 0 ]
+{
+[v spi_command@c c `uc  1 a 1 wreg ]
+[v spi_command@c c `uc  1 a 1 wreg ]
+"66
+[v spi_command@c c `uc  1 a 1 7 ]
+"70
+} 0
+"46
+[v _spi_write spi_write `(v  1 e 1 0 ]
+{
+[v spi_write@c c `uc  1 a 1 wreg ]
+"49
+[v spi_write@i i `i  1 a 2 5 ]
+"50
+[v spi_write@r r `i  1 a 2 2 ]
+"46
+[v spi_write@c c `uc  1 a 1 wreg ]
+"50
+[v spi_write@c c `uc  1 a 1 4 ]
+"61
+} 0
