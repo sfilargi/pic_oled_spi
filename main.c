@@ -5,8 +5,6 @@
  * Created on February 4, 2020, 1:59 PM
  */
 
-#include <stdint.h>
-
 #include <xc.h>
 
 #include "oled.h"
@@ -43,6 +41,13 @@
 #define OLED_DC_DATA 1
 #define OLED_DC_COMMAND 0
 #define OLED_CS  LATA5
+
+typedef unsigned char uint8_t;
+typedef char int8_t;
+typedef int int16_t;
+typedef unsigned int uint16_t;
+typedef long int int32_t;
+typedef unsigned long int uint32_t;
 
 static const char font6x8[0x60][6] = {
     { 0x00,0x00,0x00,0x00,0x00,0x00 } , /*SPC */
