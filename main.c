@@ -49,8 +49,9 @@ typedef unsigned int uint16_t;
 typedef long int int32_t;
 typedef unsigned long int uint32_t;
 
-#define RGB(r, g, b) (uint16_t)((uint16_t)(r & 0x1f) | (uint16_t)((g & 0x3f) << 5) | (uint16_t)((b & 0x1f) << 11))
-//#define RGB(r, g, b) ((uint16_t)(((uint16_t)(0b00100000) << 8) | 0b00000000))
+#define RGB(r, g, b) (uint16_t)((r & 0x1f) | \
+    ((g & 0x3f) << 5) | ((b & 0x1f) << 11))
+
 
 static const char font6x8[0x60][6] = {
     { 0x00,0x00,0x00,0x00,0x00,0x00 } , /*SPC */
