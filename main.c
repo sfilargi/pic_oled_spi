@@ -12,7 +12,7 @@
 #include "oled.h"
 
 #pragma config FEXTOSC = OFF    // FEXTOSC External Oscillator mode Selection bits (XT (crystal oscillator) from 100 kHz to 4 MHz)
-#pragma config RSTOSC = HFINT1  // Power-up default value for COSC bits (EXTOSC operating per FEXTOSC bits)
+#pragma config RSTOSC = HFINT32  // Power-up default value for COSC bits (EXTOSC operating per FEXTOSC bits)
 #pragma config CLKOUTEN = OFF   // Clock Out Enable bit (CLKOUT function is disabled; I/O or oscillator function on OSC2)
 #pragma config CSWEN = ON       // Clock Switch Enable bit (Writing to NOSC and NDIV is allowed)
 #pragma config FCMEN = ON       // Fail-Safe Clock Monitor Enable (Fail-Safe Clock Monitor is enabled)
@@ -36,8 +36,7 @@
 #pragma config CP = OFF         // User NVM Program Memory Code Protection bit (User NVM code protection disabled)
 #pragma config CPD = OFF        // Data NVM Memory Code Protection bit (Data NVM code protection disabled)
 
-
-#define _XTAL_FREQ 1000000
+#define _XTAL_FREQ 32000000
 
 #define OLED_RST LATA2
 #define OLED_DC  LATA4
@@ -144,6 +143,9 @@ static const char font6x8[0x60][6] = {
     { 0x00,0x00,0x00,0x00,0x00,0x00 }    /*null*/
 };
 
+int g_x = 0;
+int g_y = 0;
+
 void
 spi_write (char c)
 {
@@ -170,59 +172,69 @@ oled_data (char c)
     OLED_CS = 1;
 }
 
-uint8_t
-color(uint32_t color, int shift) {
-    return ((color >> shift) & 0xFF);
-}
-
-#define RED(x) color(x, 16)
-#define GREEN(x) color(x, 8)
-#define BLUE(x) color(x, 0)
-
 void
-oled_clear_window(uint8_t x, uint8_t y, uint8_t length, uint8_t height)
+oled_pixel (uint8_t x, uint8_t y, uint8_t dx, uint8_t dy, uint16_t color)
 {
-    oled_cmd(OLED_CLEAR_WINDOW);
-    oled_cmd(0); // x
-    oled_cmd(0); // y
-    oled_cmd(0xff);
-    oled_cmd(0xff);
+    oled_cmd(OLED_CMD_SETCOLUMN);
+    oled_cmd(x);
+    oled_cmd(x + dx - 1);
+    oled_cmd(OLED_CMD_SETROW);
+    oled_cmd(y);
+    oled_cmd(y + dy - 1);
+    for (uint16_t count = (dx) * (dy); count > 0; count--) {
+        oled_data((char)color >> 8);
+        oled_data((char)color);
+    }
 }
 
 void
-oled_draw_rect (uint8_t x, uint8_t y, uint8_t length, uint8_t height, uint32_t line_color, 
-        uint32_t fill_color) {
-    oled_cmd(OLED_DRAW_RECT);
-    oled_cmd(95 - (x + length));
-    oled_cmd(63 - (y + height));
-    oled_cmd(95 - x);
-    oled_cmd(63 - y);
-    oled_cmd(RED(line_color));
-    oled_cmd(GREEN(line_color));
-    oled_cmd(BLUE(line_color));
-    oled_cmd(RED(fill_color));
-    oled_cmd(GREEN(fill_color));
-    oled_cmd(BLUE(fill_color));
-}
-
-void
-oled_pixel (uint8_t x, uint8_t y)
+oled_clear (void)
 {
-    oled_cmd(0x15);
-    oled_cmd(x);
-    oled_cmd(x);
-    oled_cmd(0x75);
-    oled_cmd(y);
-    oled_cmd(y);
-    oled_data(0xff);
-    oled_data(0xff);
+    oled_pixel(0, 0, 96, 64, 0);
+}
+
+void
+oled_putc (char c)
+{
+    if (c == '\n') {
+        g_x = 0;
+        g_y++;
+    } else if (c == ' ') {
+        g_x++;
+    } else {
+        for (uint8_t dx = 0; dx < 6; dx++) {
+            char x = g_x * 6 + dx;
+            char y = g_y * 8;
+            char pixels = font6x8[c - 32][dx];
+            for (uint8_t dy = 0; dy < 8; dy++) {
+                oled_pixel(x, y + dy, 1, 1,
+                        ((pixels >> dy) & 0x1) == 0x1 ? 0xffff : 0x0);
+            }
+        }
+        g_x++;
+    }
+    if (g_x >= 16) {
+        g_x = 0;
+        g_y++;
+    }
+    if (g_y >= 8) {
+        g_y = 0;
+    }
+}
+
+void
+oled_puts (char *s)
+{
+    char c;
+    while ((c = *s++) != 0)
+        oled_putc(c);
 }
 
 void main (void)
 {
-//    OSCFRQbits.HFFRQ = 0b0110; // 32Mhz
-//    OSCCON1bits.NOSC = 0b000; // HFINTOSC with 2x PLL
-//    OSCCON1bits.NDIV = 0b0000; 
+    OSCFRQbits.HFFRQ = 0b0110; // 32Mhz
+    OSCCON1bits.NOSC = 0b000;  // HFINTOSC with 2x PLL
+    OSCCON1bits.NDIV = 0b0000; 
     
     while (OSCCON3bits.ORDY != 1); // Wait until clock is selected
 
@@ -267,30 +279,48 @@ void main (void)
     OLED_RST = 0;
     __delay_ms(1);
     OLED_RST = 1;
-    oled_cmd(OLED_CMD_DISP_OFF);
-    oled_cmd(0x87);
-    oled_cmd(0x00);
-    oled_cmd(0xAD);
+        
+    oled_cmd(OLED_CMD_DISPLAYOFF);
+    oled_cmd(OLED_CMD_SETREMAP);
+    oled_cmd(0x72);				
+    oled_cmd(OLED_CMD_STARTLINE);
+    oled_cmd(0x0);
+    oled_cmd(OLED_CMD_DISPLAYOFFSET);
+    oled_cmd(0x0);
+    oled_cmd(OLED_CMD_NORMALDISPLAY);
+    oled_cmd(OLED_CMD_SETMULTIPLEX);
+    oled_cmd(0x3F);
+    oled_cmd(OLED_CMD_SETMASTER);
     oled_cmd(0x8E);
-    oled_cmd(0xA1);
-    oled_cmd(0x00);
-    oled_cmd(0xA2);
-    oled_cmd(0x00);
-    oled_cmd(0x26); // fill enable/disable
-    oled_cmd(0x01); // enable
+    oled_cmd(OLED_CMD_POWERMODE);
+    oled_cmd(0x0B);
+    oled_cmd(OLED_CMD_PRECHARGE);
+    oled_cmd(0x31);
+    oled_cmd(OLED_CMD_CLOCKDIV);
+    oled_cmd(0xF0);
+    oled_cmd(OLED_CMD_PRECHARGEA);
+    oled_cmd(0x64);
+    oled_cmd(OLED_CMD_PRECHARGEB);
+    oled_cmd(0x78);
+    oled_cmd(OLED_CMD_PRECHARGEC);
+    oled_cmd(0x64);
+    oled_cmd(OLED_CMD_PRECHARGELEVEL);
+    oled_cmd(0x3A);
+    oled_cmd(OLED_CMD_VCOMH);
+    oled_cmd(0x3E);
+    oled_cmd(OLED_CMD_MASTERCURRENT);
+    oled_cmd(0x06);
+    oled_cmd(OLED_CMD_CONTRASTA);
+    oled_cmd(0x91);
+    oled_cmd(OLED_CMD_CONTRASTB);
+    oled_cmd(0x50);
+    oled_cmd(OLED_CMD_CONTRASTC);
+    oled_cmd(0x7D);
+    oled_cmd(OLED_CMD_DISPLAYON);
     
-    oled_cmd(0x2E); // deactivate scrolling
-    
-    oled_cmd(OLED_CMD_DISP_NORMAL);
-    oled_cmd(OLED_CMD_DISP_ON);
-    
-    oled_clear_window(0, 0, 0xff, 0xff);
-//    for (int i = 0; i < 95; i++) {
-//        if (i > 0)
-//            oled_draw_rect(i-1, 0, 1, 10, 0, 0);
-//        oled_draw_rect(i, 0, 1, 10, 0xff0000, 0xff0000);
-//    }
-    oled_pixel(1,1);
+    oled_clear();
+
+    oled_puts("01234567890123451\n2\n3\n4\n5\n6\n7");
     while(1) {
     }
 }
