@@ -36,11 +36,11 @@
 
 #define _XTAL_FREQ 32000000
 
-#define OLED_RST LATA2
-#define OLED_DC  LATA4
-#define OLED_DC_DATA 1
+#define OLED_RST        LATA2
+#define OLED_DC         LATA4
+#define OLED_DC_DATA    1
 #define OLED_DC_COMMAND 0
-#define OLED_CS  LATA5
+#define OLED_CS         LATA5
 
 typedef unsigned char uint8_t;
 typedef char int8_t;
@@ -48,6 +48,9 @@ typedef int int16_t;
 typedef unsigned int uint16_t;
 typedef long int int32_t;
 typedef unsigned long int uint32_t;
+
+#define RGB(r, g, b) (uint16_t)((uint16_t)(r & 0x1f) | (uint16_t)((g & 0x3f) << 5) | (uint16_t)((b & 0x1f) << 11))
+//#define RGB(r, g, b) ((uint16_t)(((uint16_t)(0b00100000) << 8) | 0b00000000))
 
 static const char font6x8[0x60][6] = {
     { 0x00,0x00,0x00,0x00,0x00,0x00 } , /*SPC */
@@ -187,8 +190,9 @@ oled_pixel (uint8_t x, uint8_t y, uint8_t dx, uint8_t dy, uint16_t color)
     oled_cmd(y);
     oled_cmd(y + dy - 1);
     for (uint16_t count = (dx) * (dy); count > 0; count--) {
-        oled_data((char)color >> 8);
-        oled_data((char)color);
+        
+        oled_data((char)((color >> 8) & 0xFF));
+        oled_data((char)(color & 0xFF));
     }
 }
 
@@ -199,7 +203,7 @@ oled_clear (void)
 }
 
 void
-oled_putc (char c)
+oled_putc (char c, uint16_t color)
 {
     if (c == '\n') {
         g_x = 0;
@@ -213,7 +217,7 @@ oled_putc (char c)
             char pixels = font6x8[c - 32][dx];
             for (uint8_t dy = 0; dy < 8; dy++) {
                 oled_pixel(x, y + dy, 1, 1,
-                        ((pixels >> dy) & 0x1) == 0x1 ? 0xffff : 0x0);
+                        ((pixels >> dy) & 0x1) == 0x1 ? color : 0x0);
             }
         }
         g_x++;
@@ -228,66 +232,27 @@ oled_putc (char c)
 }
 
 void
-oled_puts (char *s)
+oled_puts_c (char *s, uint16_t color)
 {
     char c;
     while ((c = *s++) != 0)
-        oled_putc(c);
+        oled_putc(c, color);
 }
 
-void main (void)
-{
-    OSCFRQbits.HFFRQ = 0b0110; // 32Mhz
-    OSCCON1bits.NOSC = 0b000;  // HFINTOSC with 2x PLL
-    OSCCON1bits.NDIV = 0b0000; 
-    
-    while (OSCCON3bits.ORDY != 1); // Wait until clock is selected
+#define oled_puts(str) oled_puts_c(str, 0xFFFF)
 
-    TRISA0 = 0; // output, SCLK
-    TRISA1 = 0; // output, MOSI -> SDA
-    TRISA2 = 0; // output, Reset
-    TRISA4 = 0; // output, D/C pin
-    TRISA5 = 0; // output, CS pin
-    
-    // reset pin
-    OLED_RST = 0;
-    OLED_CS = 0;
-    LATA0 = 0;
-    __delay_ms(1);
-    OLED_RST = 1;
-    
-    // Unlock PPS
-    GIE = 0;
-    PPSLOCK = 0x55;
-    PPSLOCK = 0xAA;
-    PPSLOCK = 0x00; // unlock PPS
-    
-    RA0PPSbits.RA0PPS = 0b11000; // RA0 is clock
-    RA1PPSbits.RA1PPS = 0b11001; // RA1 is MOSI
-        
-    // Lock PPS
-    // PPSLOCK = 0x55;
-    // PPSLOCK = 0xAA;
-    // PPSLOCK = 0x01; // lock   PPS
-    // GIE = 0; // still disabled
-    
-    SSP1STATbits.SMP = 0; // Input data is sampled at the middle of data output time
-    SSP1STATbits.CKE = 1; // Transmit occurs on transition from Idle to active clock state
-    SSP1CON1bits.CKP = 0; // Idle state for clock is a low level
-    SSP1CON1bits.SSPM = 0b0010; // SPI Master mode, clock = FOSC/64
-    SSP1CON1bits.SSPEN = 0b1; // Enables serial port and configures SCK, SDO, SDI and SS as the source of the serial port pin
-    
-    SSP1CON3bits.PCIE = 0; // Stop detection interrupts are disabled
-    SSP1CON3bits.SCIE = 0; // Start detection interrupts are disabled
-    
-    // reset pin
+void
+oled_init (void)
+{
+      // reset pin
     OLED_RST = 0;
     __delay_ms(1);
     OLED_RST = 1;
         
     oled_cmd(OLED_CMD_DISPLAYOFF);
     oled_cmd(OLED_CMD_SETREMAP);
-    oled_cmd(0x72);				
+    //oled_cmd(0x72); // RGB		
+    oled_cmd(0x76); // BGR
     oled_cmd(OLED_CMD_STARTLINE);
     oled_cmd(0x0);
     oled_cmd(OLED_CMD_DISPLAYOFFSET);
@@ -322,10 +287,75 @@ void main (void)
     oled_cmd(OLED_CMD_CONTRASTC);
     oled_cmd(0x7D);
     oled_cmd(OLED_CMD_DISPLAYON);
+}
+
+void main (void)
+{
+    OSCFRQbits.HFFRQ = 0b0110; // 32Mhz
+    OSCCON1bits.NOSC = 0b000;  // HFINTOSC with 2x PLL
+    OSCCON1bits.NDIV = 0b0000; 
     
+    while (OSCCON3bits.ORDY != 1); // Wait until clock is selected
+
+    TRISA0 = 0; // output, SCLK
+    TRISA1 = 0; // output, MOSI -> SDA
+    TRISA2 = 0; // output, Reset
+    TRISA4 = 0; // output, Data/Command pin
+    TRISA5 = 0; // output, CS/Chip Select/SS in SPI pin
+    
+    // reset pin
+    OLED_RST = 0;
+    OLED_CS = 0;
+    LATA0 = 0;
+    __delay_ms(1);
+    OLED_RST = 1;
+    
+    // Unlock PPS
+    //GIE = 0;
+    //PPSLOCK = 0x55;
+    //PPSLOCK = 0xAA;
+    //PPSLOCK = 0x00; // unlock PPS
+    
+    RA0PPSbits.RA0PPS = 0b11000; // RA0 is clock
+    RA1PPSbits.RA1PPS = 0b11001; // RA1 is MOSI
+        
+    // Lock PPS
+    // PPSLOCK = 0x55;
+    // PPSLOCK = 0xAA;
+    // PPSLOCK = 0x01; // lock   PPS
+    // GIE = 0; // still disabled
+    
+    // Setup SPI
+    SSP1STATbits.SMP = 0; // Input data is sampled at the middle of data output time
+    SSP1STATbits.CKE = 1; // Transmit occurs on transition from Idle to active clock state
+    SSP1CON1bits.CKP = 0; // Idle state for clock is a low level
+    SSP1CON1bits.SSPM = 0b0010; // SPI Master mode, clock = FOSC/64
+    SSP1CON1bits.SSPEN = 0b1; // Enables serial port and configures SCK, SDO, SDI and SS as the source of the serial port pin
+    
+    SSP1CON3bits.PCIE = 0; // Stop detection interrupts are disabled
+    SSP1CON3bits.SCIE = 0; // Start detection interrupts are disabled
+    
+    oled_init();
     oled_clear();
 
-    oled_puts("01234567890123451\n2\n3\n4\n5\n6\n7");
+    //oled_puts("01234567890123451\n2\n3\n4\n5\n6\n7");
+    oled_puts("1: ");
+    oled_puts_c("1200\n",  RGB(31, 2, 1));
+    oled_puts("2: ");
+    oled_puts_c("1200\n",  RGB(31, 2, 1));
+    oled_puts("3: ");
+    oled_puts_c("1200\n",  RGB(31, 2, 1));
+    oled_puts("4: ");
+    oled_puts_c("1200\n",  RGB(31, 2, 1));
+    oled_puts("5: ");
+    oled_puts_c("1200\n",  RGB(31, 2, 1));
+    oled_puts("6: ");
+    oled_puts_c("1200\n",  RGB(31, 2, 1));
+    oled_puts("7: ");
+    oled_puts_c("1200\n",  RGB(31, 2, 1));
+    oled_puts("8: ");
+    oled_puts_c("1200\n",  RGB(31, 2, 1));
+    
     while(1) {
     }
 }
